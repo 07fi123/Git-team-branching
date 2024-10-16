@@ -31,4 +31,27 @@ std.debug.print("Original value: {d}\n", .{ptr.*});
 std.debug.print("Copied value: {d}\n", .{copied_ptr.*});
 
 
+pub fn allocatorAllocator(allocator: std.mem.Allocator) !*std.mem.Allocator {
+    return allocator.createAllocator();
+}
+
+// Test the function
+const original_allocator = try std.heap.calloc(1, @sizeOf(std.mem.Allocator)) catch unreachable;
+defer _ = original_allocator.destroy();
+original_allocator.* = std.heap.page_allocator;
+
+const copied_allocator = try allocatorAllocator(original_allocator);
+std.debug.print("Original allocator: {s}\n", .{@ptrCast(*[1] u8, original_allocator)[0]});
+std.debug.print("Copied allocator: {s}\n", .{@ptrCast(*[1] u8, copied_allocator)[0]});
+
+// Example usage:
+const original_alloc = try copied_allocator.createAllocator();
+defer _ = original_alloc.destroy();
+
+var buffer: []u8 = try original_alloc.alloc(100);
+buffer.* = '\x00' ** 100;
+
+std.debug.print("Allocated buffer: {s}\n", .{buffer});
+
+
 ```
